@@ -89,13 +89,31 @@ const json = `{
 const obj = JSON.parse(json);
 let dinosaurs = [];
 obj.Dinos.forEach(
-    dino => console.log(dino)
+    dino => dinosaurs.push(
+        new Dinosaur(
+            dino.species,
+            dino.weight,
+            dino.height,
+            dino.diet,
+            dino.where,
+            dino.when,
+            dino.fact
+        )
+    )
 );
 
+// Use IIFE to get human data from form
+let inputs = document.getElementById("dino-compare");
+let data = (function (input) {
     // Create Human Object
-
-    // Use IIFE to get human data from form
-
+    let human = {};
+    for (let i = 0; i < input.length; i++) {
+        let key = input[i].getAttribute("id");
+        human[key] = input[i].value;
+    }
+    return human;
+})(inputs);
+console.log(data)
 
     // Create Dino Compare Method 1
     // NOTE: Weight in JSON file is in lbs, height in inches. 
