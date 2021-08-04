@@ -1,5 +1,15 @@
 
 // Create Dino Constructor
+/**
+ * @constructor
+ * @param {string} species name of the dinosaur's species
+ * @param {number} weight how heavy the dinosaur was on average in lbs
+ * @param {number} height how tall the dinosaur was on avarge in inches
+ * @param {string} diet what foods the dinosaur ate (e.g. Herbavor, Omnivor, Carnivor)
+ * @param {string} where continent(s) where the dinosaur lived
+ * @param {string} when era during which the dinosaur lived
+ * @param {string} fact one cool fact about the dinosaur
+ */
 function Dinosaur(species, weight, height, diet, where, when, fact) {
     this.species = species;
     this.weight = weight;
@@ -87,6 +97,8 @@ const json = `{
         }
     ]}`
 const obj = JSON.parse(json);
+const button = document.getElementById("btn");
+
 let dinosaurs = [];
 obj.Dinos.forEach(
     dino => dinosaurs.push(
@@ -102,29 +114,185 @@ obj.Dinos.forEach(
     )
 );
 
+/**
+ * @constructor 
+ * @param {string} name the name of the human
+ * @param {number} weight how heavy a human is in lbs
+ * @param {number} height how tall a human is in inches
+ * @param {string} diet what foods the human ate (e.g. Herbavor, Omnivor, Carnivor)
+ */
+function Human(name, weight, height, diet) {
+    this.name = name;
+    this.species = "Homo sapiens";
+    this.weight = weight;
+    this.height = height;
+    this.diet = diet;
+}
+
+// global variables
+// TODO: to be refactored
+const form = document.getElementById("dino-compare");
+
 // Use IIFE to get human data from form
-let inputs = document.getElementById("dino-compare");
-let data = (function (input) {
-    // Create Human Object
-    let human = {};
-    for (let i = 0; i < input.length; i++) {
-        let key = input[i].getAttribute("id");
-        human[key] = input[i].value;
+// TODO: Refactor error messages with isValidInput, since these are all type checks. 
+// TODO: What if I entered 0-5 that's a "valid number"?
+// TODO Corner cases:
+// - "0-5" interpreted as valid
+// - -0 that needs to be converted to 0
+function generateUserObject(form, callback) {
+    let input = retrieveInput(form);
+
+    if (callback(input)) {
+        if (["feet", "inches", "weight"].some(attr => Number(input[attr]) < 0 )) {
+            alert("Please enter non-negative numbers.");
+            return;
+        } else if (Number(input["feet"]) % 1 !== 0) {
+            alert("Please enter feet as whole numbers.");
+            return;
+        } else if (Number(input["inches"]) > 12) {
+            alert("Please enter inches between 0 and 12.");
+            return;
+        } else {
+            storeInputToLocal(input);
+            return convertSessionToUserObject();
+        }
+    } else {
+        alert("Please fill out all the entries in the form.");
+        return;
     }
-    return human;
-})(inputs);
-console.log(data)
+}
 
-    // Create Dino Compare Method 1
-    // NOTE: Weight in JSON file is in lbs, height in inches. 
+/**
+ * @description retrieves input from form
+ * @param {Object} form HTML-strutuctured user input
+ */
+function retrieveInput(form) {
+    let input = {};
+    for (let i = 0; i < form.length; i++) {
+        let key = form[i].getAttribute("id");
+        input[key] = form[i].value;
+    }
+    return input;
+}
 
-    
-    // Create Dino Compare Method 2
-    // NOTE: Weight in JSON file is in lbs, height in inches.
+/**
+ * @description checks if user has filled in all the items in the form
+ * @param {Object} input 
+ * @returns 
+ */
+function isValidInput(input) {
+    let validEntries = []; 
+    Object.keys(input).forEach(
+        key => validEntries.push(
+            (function(value) {
+                return value != "" && value != null && value.length > 0;
+            })(input[key])
+        )
+    );
+    return validEntries.every(e => e === true);
+}
 
-    
-    // Create Dino Compare Method 3
-    // NOTE: Weight in JSON file is in lbs, height in inches.
+// TODO: check if there's a way to avoid storing to local browsing session
+/**
+ * @description stores user input into a local session
+ * @param {*} input 
+ */
+function storeInputToLocal(input) {
+    Object.keys(input).forEach(
+        key => sessionStorage.setItem(key, input[key])
+    );
+}
+
+// TODO: add height functionality
+// TODO: add checks for empty fields
+/**
+ * @description saves the user's input into a Human object
+ * @param {void}
+ * @returns {Object} a user's input saved as a Human object
+ */
+function convertSessionToUserObject() {
+    let user = new Human();
+    Object.keys(sessionStorage).forEach(key => {
+        user[key] = sessionStorage.getItem(key);
+    })    
+    return user;
+}
+
+
+// if all the entries are empty, error for all
+// if a couple of the entries are empty, list out fields to fill
+// out
+// if one entry is empty, retrieve key
+
+// add a height attribute which is feet + inches
+// delete feet + inches
+// add a checker if no data entered in the form
+// reject and add a warning checking which pieces are blank
+const dinosaur = new Dinosaur();
+dinosaur["weight"] = 44;
+dinosaur["height"] = 20;
+dinosaur["diet"] = "carnivor";
+
+const user = new Human();
+user["weight"] = 45;
+user["height"] = 21;
+user["diet"] = "carnivor";
+
+// Create Dino Compare Method 1
+// NOTE: Weight in JSON file is in lbs, height in inches.
+/**
+ * @description A weight comparator between the user and a dinosaur
+ * @param {Object} human user input from the form
+ * @param {number} human.weight user's weight input from the form (in lbs)
+ * @param {Object} dino a JSON repository of dinosaurs
+ * @param {number} dino.weight weight-related info from a dinosaur (in lbs)
+ * @returns {string} Descriptor comparing the user's weight with a dinosaur's
+ */
+function compareWeights(human, dino) {
+    if (human.weight > dino.weight) {
+        return `This dinosaur is ${human.weight - dino.weight} lbs lighter than you.`;
+    } else if (human.weight < dino.weight) {
+        return `This dinosaur is ${dino.weight - human.weight} lbs heavier than you.`;
+    } else {
+        return "This dinosaur is as heavy as you.";
+    }
+}
+
+// Create Dino Compare Method 2
+// NOTE: Weight in JSON file is in lbs, height in inches.
+/**
+ * @description A height comparator between the user and a dinosaur
+ * @param {Object} human user input from the form
+ * @param {number} human.height user's height input from the form (in inches)
+ * @param {Object} dino a JSON repository of dinosaurs
+ * @param {number} dino.height height-related info from a dinosaur (in inches)
+ * @returns {string} Descriptor comparing the user's height with a dinosaur's
+ */
+function compareHeights (human, dino) {
+    if (human.height > dino.height) {
+        return `This dinosaur is ${human.height- dino.height} in shorter than you.`;
+    } else if (human.height< dino.height) {
+        return `This dinosaur is ${dino.height - human.height} in taller than you.`;
+    } else {
+        return "This dinosaur is as tall as you.";
+    }
+}
+
+// Create Dino Compare Method 3
+// NOTE: Weight in JSON file is in lbs, height in inches.
+/**
+ * @description A height comparator between the user and a dinosaur
+ * @param {Object} human user input from the form
+ * @param {string} human.diet user's diet input from the form
+ * @param {Object} dino a JSON repository of dinosaurs
+ * @param {string} dino.diet diet-related info from a dinosaur
+ * @returns {string} Descriptor comparing the user's diet with a dinosaur's
+ */
+function compareDiets(human, dino) {
+    return human.diet.toLowerCase() == dino.diet.toLowerCase() ?
+           `This dinosaur is also a ${dino.diet} like you.` :
+           `This dinosaur, unlike you, is a ${dino.diet}.`;
+}
 
 
     // Generate Tiles for each Dino in Array
@@ -135,3 +303,7 @@ console.log(data)
 
 
 // On button click, prepare and display infographic
+button.addEventListener("click", () => {
+    let user = generateUserObject(form, isValidInput);
+    console.log(user);
+})
