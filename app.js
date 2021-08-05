@@ -21,6 +21,7 @@ function Dinosaur(species, weight, height, diet, where, when, fact) {
 }
 
 // Create Dino Objects
+// TODO: Global objects to be refactored
 const json = `{
     "Dinos": [
         {
@@ -98,6 +99,8 @@ const json = `{
     ]}`
 const obj = JSON.parse(json);
 const button = document.getElementById("btn");
+const form = document.getElementById("dino-compare");
+const grid = document.getElementById("grid");
 
 let dinosaurs = [];
 obj.Dinos.forEach(
@@ -129,42 +132,44 @@ function Human(name, weight, height, diet) {
     this.diet = diet;
 }
 
-// global variables
-// TODO: to be refactored
-const form = document.getElementById("dino-compare");
+// TODO: How to store the result not as a global variable
+// Use IIFE to get human data from the form
+/**
+ * 
+ * @param {Object} form HTML-strutuctured user input
+ * @returns a user's input stored as a Human object
+ */
+function generateUserObject(form) {
+    const numericInputs = ["feet", "inches", "weight"];
 
-// Use IIFE to get human data from form
-// TODO: Refactor error messages with isValidInput, since these are all type checks. 
-// TODO: What if I entered 0-5 that's a "valid number"?
-// TODO Corner cases:
-// - "0-5" interpreted as valid
-// - -0 that needs to be converted to 0
-function generateUserObject(form, callback) {
     let input = retrieveInput(form);
+    let invalidInputCriteria = [
+        (function (input) {
+            let validEntries = []; 
+            Object.keys(input).forEach(
+                key => validEntries.push(
+                    (function(value) {return !value})(input[key])
+            ));
+            return validEntries.some(e => e === true);
+        })(input),
+        numericInputs.some(attr => Number(input[attr]) <= 0), 
+        Number(input["feet"]) % 1 !== 0, 
+        Number(input["inches"]) > 12,
+    ];
 
-    if (callback(input)) {
-        if (["feet", "inches", "weight"].some(attr => Number(input[attr]) < 0 )) {
-            alert("Please enter non-negative numbers.");
-            return;
-        } else if (Number(input["feet"]) % 1 !== 0) {
-            alert("Please enter feet as whole numbers.");
-            return;
-        } else if (Number(input["inches"]) > 12) {
-            alert("Please enter inches between 0 and 12.");
-            return;
-        } else {
-            storeInputToLocal(input);
-            return convertSessionToUserObject();
-        }
-    } else {
-        alert("Please fill out all the entries in the form.");
+    if (invalidInputCriteria.some(c => c === true)) {
+        printErrorMessage(invalidInputCriteria);
         return;
+    } else {
+        storeInputToLocal(input);
+        return convertSessionToUserObject();
     }
-}
+} 
 
 /**
  * @description retrieves input from form
  * @param {Object} form HTML-strutuctured user input
+ * @returns {Object} user's input stored as an object
  */
 function retrieveInput(form) {
     let input = {};
@@ -176,26 +181,35 @@ function retrieveInput(form) {
 }
 
 /**
- * @description checks if user has filled in all the items in the form
- * @param {Object} input 
- * @returns 
+ * @description print an error message based on invalid input criteria
+ * @param {Array} criteria set of error criteria
+ * @returns {void} 
  */
-function isValidInput(input) {
-    let validEntries = []; 
-    Object.keys(input).forEach(
-        key => validEntries.push(
-            (function(value) {
-                return value != "" && value != null && value.length > 0;
-            })(input[key])
-        )
-    );
-    return validEntries.every(e => e === true);
+function printErrorMessage(criteria) {
+    let idx = criteria.findIndex(function(c) {return c === true});
+    switch (idx) {
+        case 0:
+            alert("Please fill out all the entries in the form correctly.");
+            break;
+        case 1:
+            alert("Please enter non-negative numbers.");
+            break;
+        case 2:
+            alert("Please enter feet as whole numbers.");
+            break;
+        case 3:
+            alert("Please enter inches between 0 and 12.");
+            break;
+        default:
+            break;
+    }
 }
 
 // TODO: check if there's a way to avoid storing to local browsing session
 /**
  * @description stores user input into a local session
- * @param {*} input 
+ * @param {Object} input user's input stored as an object
+ * @returns {void} 
  */
 function storeInputToLocal(input) {
     Object.keys(input).forEach(
@@ -203,11 +217,9 @@ function storeInputToLocal(input) {
     );
 }
 
-// TODO: add height functionality
-// TODO: add checks for empty fields
 /**
- * @description saves the user's input into a Human object
- * @param {void}
+ * @description saves the user's input from a local session into a Human object
+ * @param {void} 
  * @returns {Object} a user's input saved as a Human object
  */
 function convertSessionToUserObject() {
@@ -215,28 +227,11 @@ function convertSessionToUserObject() {
     Object.keys(sessionStorage).forEach(key => {
         user[key] = sessionStorage.getItem(key);
     })    
+    user["height"] = String(Number(user["feet"]) * 12 + Number(user["inches"]));
+    delete user["feet"];
+    delete user["inches"];
     return user;
 }
-
-
-// if all the entries are empty, error for all
-// if a couple of the entries are empty, list out fields to fill
-// out
-// if one entry is empty, retrieve key
-
-// add a height attribute which is feet + inches
-// delete feet + inches
-// add a checker if no data entered in the form
-// reject and add a warning checking which pieces are blank
-const dinosaur = new Dinosaur();
-dinosaur["weight"] = 44;
-dinosaur["height"] = 20;
-dinosaur["diet"] = "carnivor";
-
-const user = new Human();
-user["weight"] = 45;
-user["height"] = 21;
-user["diet"] = "carnivor";
 
 // Create Dino Compare Method 1
 // NOTE: Weight in JSON file is in lbs, height in inches.
@@ -249,10 +244,12 @@ user["diet"] = "carnivor";
  * @returns {string} Descriptor comparing the user's weight with a dinosaur's
  */
 function compareWeights(human, dino) {
-    if (human.weight > dino.weight) {
-        return `This dinosaur is ${human.weight - dino.weight} lbs lighter than you.`;
-    } else if (human.weight < dino.weight) {
-        return `This dinosaur is ${dino.weight - human.weight} lbs heavier than you.`;
+    const humanWeight = Number(human.weight);
+    const dinoWeight = Number(dino.weight);
+    if (humanWeight > dinoWeight) {
+        return `This dinosaur is ${humanWeight - dinoWeight} lb lighter than you.`;
+    } else if (humanWeight < dinoWeight) {
+        return `This dinosaur is ${dinoWeight - humanWeight} lb heavier than you.`;
     } else {
         return "This dinosaur is as heavy as you.";
     }
@@ -269,10 +266,12 @@ function compareWeights(human, dino) {
  * @returns {string} Descriptor comparing the user's height with a dinosaur's
  */
 function compareHeights (human, dino) {
-    if (human.height > dino.height) {
-        return `This dinosaur is ${human.height- dino.height} in shorter than you.`;
-    } else if (human.height< dino.height) {
-        return `This dinosaur is ${dino.height - human.height} in taller than you.`;
+    const humanHeight = Number(human.height);
+    const dinoHeight = Number(dino.height);
+    if (humanHeight > dinoHeight) {
+        return `This dinosaur is ${humanHeight- dinoHeight} in shorter than you.`;
+    } else if (humanHeight< dinoHeight) {
+        return `This dinosaur is ${dinoHeight - humanHeight} in taller than you.`;
     } else {
         return "This dinosaur is as tall as you.";
     }
@@ -294,16 +293,69 @@ function compareDiets(human, dino) {
            `This dinosaur, unlike you, is a ${dino.diet}.`;
 }
 
+const dinosaur = new Dinosaur();
+dinosaur["weight"] = "4400";
+dinosaur["height"] = "20";
+dinosaur["diet"] = "Carnivor";
 
+const user = new Human();
+user["weight"] = "45";
+user["height"] = "21";
+user["diet"] = "omnivor";
+
+function displayDinosaurGrid(dino) {
+    grid.innerHTML += `
+        <div class="grid-item">
+          <h3>
+            ${dino.species.toUpperCase()}
+          </h3>
+          <img src="./images/${dino.species.toLowerCase()}.png">
+          <p>
+            ${dino.fact}
+          </p>
+        </div>
+    `
+}
+
+function displayHumanGrid(user) {
+    grid.innerHTML += `
+        <div class="grid-item">
+          <h3>
+            ${user.species.toUpperCase()}
+          </h3>
+          <img src="./images/human.png">
+        </div> 
+    `
+}
+
+function displayInfographic(user, dinosaurs) {
+    let counter = 0;
+
+    (function (array) {
+        return array.sort(() => Math.random() - 0.5)
+    })(dinosaurs).forEach(dino => {
+        displayDinosaurGrid(dino);
+        counter += 1;
+
+        if (counter == 4) {
+            displayHumanGrid(user);
+        }
+    }
+)}
+
+function removeFormFromScreen(form) {
+    return form.style.display = "none";
+}
     // Generate Tiles for each Dino in Array
   
-        // Add tiles to DOM
-
-    // Remove form from screen
-
-
 // On button click, prepare and display infographic
 button.addEventListener("click", () => {
-    let user = generateUserObject(form, isValidInput);
-    console.log(user);
-})
+    let user = generateUserObject(form);
+    if (user) {
+        // Add tiles to DOM
+        displayInfographic(user, dinosaurs);
+
+        // Remove form from screen
+        removeFormFromScreen(form);
+    }
+});
