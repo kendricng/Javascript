@@ -293,16 +293,6 @@ function compareDiets(human, dino) {
            `This dinosaur, unlike you, is a ${dino.diet}.`;
 }
 
-const dinosaur = new Dinosaur();
-dinosaur["weight"] = "4400";
-dinosaur["height"] = "20";
-dinosaur["diet"] = "Carnivor";
-
-const user = new Human();
-user["weight"] = "45";
-user["height"] = "21";
-user["diet"] = "omnivor";
-
 function displayDinosaurGrid(dino) {
     grid.innerHTML += `
         <div class="grid-item">
@@ -331,6 +321,7 @@ function displayHumanGrid(user) {
 function displayInfographic(user, dinosaurs) {
     let counter = 0;
 
+    // Generate Tiles for each Dino in Array
     (function (array) {
         return array.sort(() => Math.random() - 0.5)
     })(dinosaurs).forEach(dino => {
@@ -346,7 +337,6 @@ function displayInfographic(user, dinosaurs) {
 function removeFormFromScreen(form) {
     return form.style.display = "none";
 }
-    // Generate Tiles for each Dino in Array
   
 // On button click, prepare and display infographic
 button.addEventListener("click", () => {
