@@ -133,6 +133,7 @@ function Human(name, weight, height, diet) {
 }
 
 // TODO: How to store the result not as a global variable
+// TODO: Some corner cases are still escaping 0t14 and 04
 // Use IIFE to get human data from the form
 /**
  * 
@@ -180,14 +181,15 @@ function retrieveInput(form) {
     return input;
 }
 
+// TODO: Some invalid inputs are still getting through 42t1 and 04
 /**
  * @description print an error message based on invalid input criteria
  * @param {Array} criteria set of error criteria
  * @returns {void} 
  */
 function printErrorMessage(criteria) {
-    let idx = criteria.findIndex(function(c) {return c === true});
-    switch (idx) {
+    let firstErrorIndex = criteria.findIndex(function(c) {return c === true});
+    switch (firstErrorIndex) {
         case 0:
             alert("Please fill out all the entries in the form correctly.");
             break;
@@ -231,6 +233,31 @@ function convertSessionToUserObject() {
     delete user["feet"];
     delete user["inches"];
     return user;
+}
+
+// TODO: combine with comparisons with Humans
+// TODO: Extract the pigeon to always print its own fact
+function produceDinosaurFacts(dino, attr) {
+    if (dino.species === "Pigeon") {
+        return dino.fact;
+    } else {
+        switch (attr) {
+            case "diet":
+                return `The ${dino.species} ate a ${dino.diet} diet.`;
+            case "height":
+                return `The ${dino.species} was ${dino.height / 12} feet tall.`;
+            case "weight":
+                return `The ${dino.species} weighed ${dino.weight} lbs.`;
+            case "when":
+                return `The ${dino.species} lived during the ${dino.when} era.`;
+            case "where":
+                return `The ${dino.species} lived in ${dino.where}.`;
+            case "fact":
+                return dino.fact;
+            default:
+                return `The ${dino.species} is a dinosaur.`;
+        }
+    }
 }
 
 // Create Dino Compare Method 1
@@ -293,7 +320,10 @@ function compareDiets(human, dino) {
            `This dinosaur, unlike you, is a ${dino.diet}.`;
 }
 
+// TODO: Change fact displayed to be a random fact
+// TODO: Make the info into a sentence
 function displayDinosaurGrid(dino) {
+    const attributes = Object.keys(dino);
     grid.innerHTML += `
         <div class="grid-item">
           <h3>
@@ -301,7 +331,7 @@ function displayDinosaurGrid(dino) {
           </h3>
           <img src="./images/${dino.species.toLowerCase()}.png">
           <p>
-            ${dino.fact}
+            ${produceDinosaurFacts(dino, attributes[parseInt(Math.random() * attributes.length)])}
           </p>
         </div>
     `
@@ -311,7 +341,7 @@ function displayHumanGrid(user) {
     grid.innerHTML += `
         <div class="grid-item">
           <h3>
-            ${user.species.toUpperCase()}
+            ${user.name.toUpperCase()}
           </h3>
           <img src="./images/human.png">
         </div> 
