@@ -136,7 +136,7 @@ function Human(name, weight, height, diet) {
 // TODO: Some corner cases are still escaping 0t14 and 04
 // Use IIFE to get human data from the form
 /**
- * 
+ * @description generates a Human constructor based on a user's input
  * @param {Object} form HTML-strutuctured user input
  * @returns a user's input stored as a Human object
  */
@@ -235,28 +235,26 @@ function convertSessionToUserObject() {
     return user;
 }
 
-// TODO: combine with comparisons with Humans
-// TODO: Extract the pigeon to always print its own fact
+/**
+ * @description generates a fact based on a dinosaur's attributes
+ * @param {Objet} dino A dinosaur object
+ * @param {string} attr an attribute or method of the dinosaur
+ * @returns a string of facts about the dinosaur
+ */
 function produceDinosaurFacts(dino, attr) {
-    if (dino.species === "Pigeon") {
-        return dino.fact;
-    } else {
-        switch (attr) {
-            case "diet":
-                return `The ${dino.species} ate a ${dino.diet} diet.`;
-            case "height":
-                return `The ${dino.species} was ${dino.height / 12} feet tall.`;
-            case "weight":
-                return `The ${dino.species} weighed ${dino.weight} lbs.`;
-            case "when":
-                return `The ${dino.species} lived during the ${dino.when} era.`;
-            case "where":
-                return `The ${dino.species} lived in ${dino.where}.`;
-            case "fact":
-                return dino.fact;
-            default:
-                return `The ${dino.species} is a dinosaur.`;
-        }
+    switch (attr) {
+        case "diet":
+            return `The ${dino.species} ate a ${dino.diet} diet.`;
+        case "height":
+            return `The ${dino.species} was ${dino.height / 12} feet tall.`;
+        case "weight":
+            return `The ${dino.species} weighed ${dino.weight} lbs.`;
+        case "when":
+            return `The ${dino.species} lived during the ${dino.when} era.`;
+        case "where":
+            return `The ${dino.species} lived in ${dino.where}.`;
+        default:
+            return dino.fact;
     }
 }
 
@@ -320,10 +318,28 @@ function compareDiets(human, dino) {
            `This dinosaur, unlike you, is a ${dino.diet}.`;
 }
 
-// TODO: Change fact displayed to be a random fact
-// TODO: Make the info into a sentence
-function displayDinosaurGrid(dino) {
-    const attributes = Object.keys(dino);
+function pickRandomFact(dino, human) {
+    if (dino.species === "Pigeon") {
+        return dino.fact;
+    } else {
+        let attributes = Object.keys(dino);
+        let factGenerators = [
+            produceDinosaurFacts(dino, attributes),
+            compareWeights(human, dino),
+            compareHeights(human, dino),
+            compareDiets(human, dino)
+        ]
+        return factGenerators[parseInt(Math.random() * factGenerators.length)];
+    }
+}
+
+/**
+ * @description generates an infographic grid for each dinosaur
+ * @param {Object} dino a Dinosaur constructor
+ * @param {Object} human a user Human constructor
+ * @returns {void}
+ */
+function displayDinosaurGrid(dino, human) {
     grid.innerHTML += `
         <div class="grid-item">
           <h3>
@@ -331,12 +347,17 @@ function displayDinosaurGrid(dino) {
           </h3>
           <img src="./images/${dino.species.toLowerCase()}.png">
           <p>
-            ${produceDinosaurFacts(dino, attributes[parseInt(Math.random() * attributes.length)])}
+            ${pickRandomFact(dino, human)}
           </p>
         </div>
     `
 }
 
+/**
+ * @description generates a grid for the user
+ * @param {Object} user a Human constructor
+ * @returns {void}
+ */
 function displayHumanGrid(user) {
     grid.innerHTML += `
         <div class="grid-item">
@@ -348,6 +369,12 @@ function displayHumanGrid(user) {
     `
 }
 
+/**
+ * @description combines the dinosaur and human grids into a whole infographic
+ * @param {Object} user a Human constructor
+ * @param {Object} dinosaurs a JSON full of Dinosaur constructors
+ * @returns {void}
+ */
 function displayInfographic(user, dinosaurs) {
     let counter = 0;
 
@@ -355,7 +382,7 @@ function displayInfographic(user, dinosaurs) {
     (function (array) {
         return array.sort(() => Math.random() - 0.5)
     })(dinosaurs).forEach(dino => {
-        displayDinosaurGrid(dino);
+        displayDinosaurGrid(dino, user);
         counter += 1;
 
         if (counter == 4) {
@@ -364,6 +391,11 @@ function displayInfographic(user, dinosaurs) {
     }
 )}
 
+/**
+ * @description removes the user input form
+ * @param {Object} form an HTML-structured user input
+ * @returns change in display settings of the form
+ */
 function removeFormFromScreen(form) {
     return form.style.display = "none";
 }
