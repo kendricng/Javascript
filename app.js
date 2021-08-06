@@ -1,3 +1,7 @@
+// TODO: Read JSON file out of this script
+// TODO: Find ways to read a user file without storing it in localSession
+// TODO: Enclose global variables to ensure they're not manipulable
+
 
 // Create Dino Constructor
 /**
